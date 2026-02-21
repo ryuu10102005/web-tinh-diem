@@ -1,0 +1,270 @@
+/* --- 1. Biến & Thiết lập cơ bản --- */
+:root {
+  /* Màu sắc */
+  --primary: #c62828; /* Đỏ đậm */
+  --secondary: #e53935; /* Đỏ tươi */
+  --bg: #f8f8f8; /* Nền xám nhạt */
+  --card: #ffffff; /* Nền card trắng */
+  --text: #212121; /* Chữ đen đậm */
+  --muted: #616161; /* Chữ xám nhạt */
+  --shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  --radius: 8px;
+  
+  /* Màu trạng thái */
+  --success-bg: #e8f5e9; 
+  --success-text: #2e7d32;
+  --error-bg: #fbe9e7;
+  --error-text: #e53935;
+  
+  font-family: 'Roboto', Arial, sans-serif;
+  font-size: 16px;
+}
+
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);line-height:1.6;}
+.container{max-width:1200px;margin:0 auto;padding:20px}
+h2, h3 {margin-top: 0;}
+
+/* --- 2. Header --- */
+.header{
+  background:var(--primary);
+  color:#fff;
+  padding:20px 0;
+  box-shadow:0 3px 10px rgba(0,0,0,0.15);
+}
+.header .inner{
+  display:flex;
+  flex-direction: column;
+  align-items:center;
+  max-width:1200px;
+  margin:0 auto;
+  padding:0 20px
+}
+.logo{font-weight:700; font-size: 1.8em; letter-spacing: 1px;}
+.subtitle {font-size: 0.8em; opacity: 0.9;}
+
+/* --- 3. Card/Section --- */
+.card {
+  margin-top:25px;
+  padding:30px;
+  background:var(--card);
+  border-radius:var(--radius);
+  box-shadow:var(--shadow);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+.card:hover {
+  box-shadow: 0 6px 25px rgba(0, 0, 0, 0.15);
+}
+.card h2{
+  color:var(--primary);
+  border-bottom:2px solid var(--secondary);
+  padding-bottom:10px;
+  margin-bottom: 20px;
+}
+
+/* --- 4. Form Styling --- */
+.form-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:30px;
+}
+.form-group {
+  padding: 15px;
+  border: 1px solid #eee;
+  border-radius: var(--radius);
+}
+.form-grid label{
+  display:block;
+  font-weight:600;
+  margin-top:15px;
+  color: var(--muted);
+}
+.form-grid label:first-child {
+  margin-top: 0;
+}
+.form-grid input[type="text"], 
+.form-grid input[type="number"]{
+  padding:12px;
+  border:1px solid #ddd;
+  border-radius:4px;
+  width:100%;
+  margin-top:5px;
+  font-size: 1em;
+  transition: border-color 0.3s;
+}
+.form-grid input:focus {
+  border-color: var(--primary);
+  outline: none;
+}
+.full-width {
+  grid-column: 1 / -1;
+}
+
+.radio-group {
+  display: flex;
+  gap: 20px;
+  margin-top: 10px;
+}
+.radio-label {
+  font-weight: 400 !important; /* Ghi đè font-weight */
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--text) !important;
+  cursor: pointer;
+}
+
+.calculate-btn{
+  background:var(--primary);
+  color:white;
+  padding:12px 20px;
+  border:none;
+  border-radius:var(--radius);
+  cursor:pointer;
+  margin-top:25px;
+  width:100%;
+  font-size:1.1em;
+  font-weight:700;
+  letter-spacing: 0.5px;
+  transition: background 0.3s ease, transform 0.1s ease;
+}
+.calculate-btn:hover{background:var(--secondary)}
+.calculate-btn:active{transform: translateY(1px);}
+
+
+/* --- 5. Kết quả & Trạng thái --- */
+.result-box{
+  margin-top:30px;
+  padding:20px;
+  border:2px solid var(--secondary);
+  border-radius:var(--radius);
+  background-color:var(--bg);
+}
+.result-box h3 {
+  color: var(--secondary);
+  margin-bottom: 15px;
+}
+.highlight-score{
+  font-weight:bold;
+  color:var(--primary);
+  font-size:1.3em;
+}
+.status-message{
+  margin-top:20px;
+  padding:15px;
+  border-radius:var(--radius);
+  font-weight: 700;
+}
+.status-success{
+  background-color:var(--success-bg);
+  color:var(--success-text);
+  border:1px solid var(--success-text);
+}
+.status-error{
+  background-color:var(--error-bg);
+  color:var(--error-text);
+  border:1px solid var(--error-text);
+}
+/* --- 6. Bảng dữ liệu --- */
+.table-wrapper{
+  overflow-x:auto;
+  margin-top:15px
+}
+table{
+  width:100%;
+  border-collapse:separate; /* Dùng separate để áp dụng border-radius */
+  border-spacing: 0;
+  min-width:750px;
+  background:var(--card);
+}
+th,td{
+  padding:12px 15px;
+  text-align:left;
+  border-bottom:1px solid #f0f0f0;
+}
+th{
+  background:var(--secondary);
+  color:#fff;
+  cursor:pointer;
+  text-transform: uppercase;
+  font-size: 0.9em;
+}
+th:first-child { border-top-left-radius: var(--radius); }
+th:last-child { border-top-right-radius: var(--radius); }
+tr:last-child td { border-bottom: none; }
+tbody tr:hover {
+  background-color: #f5f5f5; /* Hiệu ứng hover cho dòng */
+  cursor: pointer;
+}
+
+/* Sắp xếp */
+.sorted-asc::after,
+.sorted-desc::after{
+  content:'';
+  display:inline-block;
+  width:0;height:0;
+  margin-left:8px;
+  border-left:5px solid transparent;
+  border-right:5px solid transparent
+}
+.sorted-asc::after{border-bottom:5px solid #fff}
+.sorted-desc::after{border-top:5px solid #fff}
+
+/* Phân trang */
+.pager{
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  gap:8px;
+  margin-top:20px
+}
+.pager button{
+  padding:10px 15px;
+  border:1px solid var(--primary);
+  background:var(--card);
+  color:var(--primary);
+  cursor:pointer;
+  border-radius:50px; /* Bo tròn hoàn toàn */
+  font-weight: 700;
+  transition: background 0.2s, color 0.2s;
+}
+.pager button:hover:not(.active) {
+  background: #ffebee;
+}
+.pager button.active{
+  background:var(--primary);
+  color:#fff;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+  .header .inner {
+    padding: 0 15px;
+  }
+  .container {
+    padding: 10px;
+  }
+}
+  /* CSS Phân trang số đẹp hơn */
+  .pager { margin-top: 20px; display: flex; justify-content: center; gap: 5px; align-items: center; }
+  .pager button {
+    padding: 6px 12px;
+    border: 1px solid #ccc;
+    background: #fff;
+    cursor: pointer;
+    border-radius: 4px;
+    font-size: 14px;
+    transition: background 0.2s;
+  }
+  .pager button:hover:not(:disabled) { background-color: #e0e0e0; }
+  .pager button.active {
+    background-color: #2196F3; /* Màu xanh dương */
+    color: white;
+    border-color: #2196F3;
+    font-weight: bold;
+  }
+  .pager button:disabled { background: #f9f9f9; color: #bbb; cursor: default; }
+  .pager span { color: #888; margin: 0 2px; }

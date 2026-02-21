@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Hệ thống Tính Điểm Nghiên Cứu - Final Fix</title>
+<link rel="stylesheet" href="styles.css"> 
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+<script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+</head>
+<body>
+<div class="header">
+  <div class="inner">
+    <div class="logo">HỆ THỐNG TÍNH ĐIỂM NGHIÊN CỨU</div>
+    <div class="subtitle">Wicom Lab | E7 - 717</div>
+  </div>
+</div>
+<div class="container">
+
+  <section id="scoring-module" class="card">
+    <h2>[1] Tính Toán Điểm Bài Báo</h2>
+    <form id="scoreForm">
+      <div class="form-grid">
+        <div class="form-group">
+          <label for="publisher">Publisher</label>
+           <input type="text" id="publisher" placeholder="Tự động hoặc nhập tay..." required>
+          <label for="journal_name">Journal Name</label>
+          <input type="text" id="journal_name" placeholder="Nhập tên tạp chí..." required>
+        </div>
+        <div class="form-group">
+          <label for="ranking_percent">Ranking (%)</label>
+          <input type="number" id="ranking_percent" step="0.000001" placeholder="Nhập % ranking" required>
+
+          <label for="cites_3_5y">Total Citations</label>
+          <input type="number" id="cites_3_5y" value="0" required>
+
+          <label for="role_weight">Role Weight (1 / 0.9 / 0.6)</label>
+          <input type="number" id="role_weight" value="1.0" step="0.1" required>
+        </div>
+        <div class="form-group">
+            <label>Flagship Journal?</label> 
+            <div class="radio-container">
+                <div class="radio-group">
+                    <input type="radio" id="flagship-yes" name="flagship" value="flagship">
+                    <label for="flagship-yes" class="radio-label">Có (Flagship)</label>
+                    <input type="radio" id="flagship-no" name="flagship" value="non-flagship" checked>
+                    <label for="flagship-no" class="radio-label">Không (Non-Flagship)</label>
+                </div>
+            </div>
+        </div>
+      <button type="submit" class="calculate-btn">Tính Toán Điểm</button>
+    </form>
+
+    <div id="statusMessage" class="status-message" style="display:none;"></div>
+
+    <div class="result-box">
+      <h3>[2] Kết Quả Tính Toán</h3>
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr><th>JournalScore</th><th>ImpactScore</th><th>PaperScore</th><th>PaperScore Adj</th><th>Chi tiết</th></tr>
+          </thead>
+          <tbody id="resultsBody">
+            <tr><td colspan="5" style="text-align:center;">Chưa có dữ liệu</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <section class="card journal-list">
+    <h2>[3] Danh Sách Tạp Chí</h2>
+    <div class="controls" style="display:flex; gap:10px; margin-bottom: 20px;">
+        <input id="searchInput" class="input" style="flex-grow: 1; padding: 10px;" placeholder="Tìm kiếm tên tạp chí..." />
+        <select id="categoryFilter" class="select" style="padding: 10px;"><option value="">Tất cả Quartile</option></select>
+        <button id="btnSearch" class="calculate-btn">Tìm kiếm</button>
+        <button id="btnClear" class="calculate-btn" style="background-color: #f44336;">Xóa bộ lọc</button>
+    </div>
+    <div class="table-wrapper">
+      <table id="journalTable">
+        <thead>
+          <tr>
+            <th data-key="journal_name">Tên Tạp chí</th>
+            <th data-key="publisher">Nhà xuất bản</th>
+            <th data-key="quartile">Quartile</th>
+            <th data-key="jif_rank">JIF Rank</th>
+            <th data-key="total_citations">Total Cites</th>
+            <th data-key="ranking_percent">Ranking (%)</th>
+          </tr>
+        </thead>
+        <tbody id="journalBody"><tr><td colspan="6" style="text-align:center;">⏳ Đang kết nối file Excel...</td></tr></tbody>
+      </table>
+    </div>
+    
+    <div class="pager" id="pager"></div>
+    <div id="currentInfo" style="text-align: center; color: #666; font-size: 0.9em; margin-top:10px;"></div>
+  </section>
+</div>
+
+<script>
+// --- PHẦN 1: GỌI API TÍNH TOÁN ---
+document.getElementById('scoreForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const form = e.target;
+  const statusMessage = document.getElementById('statusMessage');
+  const resultsBody = document.getElementById('resultsBody');
+
+  const payload = {
+    publisher: document.getElementById('publisher').value,
+    journal_name: form.journal_name.value,
+    sjr_percentile_p: parseFloat(form.ranking_percent.value),
+    cites_3_5y: parseFloat(form.cites_3_5y.value),
+    role_weight: parseFloat(form.role_weight.value),
+    is_flagship: document.querySelector('input[name="flagship"]:checked').value === "flagship"
+  };
+
+  resultsBody.innerHTML = '<tr><td colspan="5" style="text-align:center;">⏳ Đang tính toán...</td></tr>';
+  statusMessage.style.display = 'none';
+
+  try {
+    const response = await fetch('/api/calculate', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
+    });
+    if (!response.ok) throw new Error('Lỗi kết nối Server');
+    const res = await response.json();
+   // Sử dụng parseFloat để tự động bỏ số 0 vô nghĩa ở cuối sau khi đã làm tròn
+    const fmt = (v) => (typeof v === 'number' ? parseFloat(v.toFixed(2)) : v);
+
+    resultsBody.innerHTML = `<tr>
+        <td>${fmt(res.JournalScore)}</td><td>${fmt(res.ImpactScore)}</td>
+        <td>${fmt(res.PaperScore)}</td><td class="highlight-score">${fmt(res.PaperScoreAdj)}</td>
+        <td style="font-size:0.8em">Ranking: ${payload.sjr_percentile_p}%<br>Base: ${fmt(res.JournalBase)}</td>
+      </tr>`;
+    statusMessage.className = 'status-message status-success';
+    statusMessage.innerHTML = '✅ Tính toán thành công!';
+    statusMessage.style.display = 'block';
+  } catch (err) {
+    resultsBody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:red;">❌ Lỗi</td></tr>';
+    statusMessage.className = 'status-message'; statusMessage.style.color = 'red';
+    statusMessage.innerHTML = '❌ Lỗi: ' + err.message + '. <br>Hãy chạy "node server.js"';
+    statusMessage.style.display = 'block';
+  }
+});
+
+// --- PHẦN 2: EXCEL LOGIC ---
+function normalize(str){
+  return str ? str.toString().toLowerCase().trim().replace(/\s+/g,' ') : '';
+}
+
+let journalData = []; let currentPage = 1; const pageSize = 20;
+let currentSort = { key:null, asc:true }; let currentQuery = ''; let currentCategory = '';
+const journalBody = document.getElementById('journalBody');
+const EXCEL_FILE_URL = 'data.xlsx'; 
+
+async function loadAutoExcel() {
+  try {
+    const response = await fetch(EXCEL_FILE_URL);
+    if (!response.ok) throw new Error(`Không tìm thấy file ${EXCEL_FILE_URL}`);
+    const arrayBuffer = await response.arrayBuffer();
+    const workbook = XLSX.read(arrayBuffer, { type: 'array' });
+    const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+    const rawData = XLSX.utils.sheet_to_json(worksheet);
+
+    journalData = rawData.map(row => ({
+      journal_name: row['Journal Name'] || '', publisher: row['Publisher'] || '', 
+      quartile: row['JIF Quartile'] || '', jif_rank: row['JIF Rank'] || '',
+      total_citations: row['Total Cites'] || 0, ranking_percent: row['Ranking (%)'] || 0
+    }));
+    buildCategoryFilter(); renderJournals();
+  } catch (err) {
+    journalBody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:red;">❌ Lỗi: ${err.message}. Hãy kiểm tra tên file data.xlsx</td></tr>`;
+  }
+}
+
+function buildCategoryFilter(){
+  const map = new Set(); journalData.forEach(j => { if(j.quartile) map.add(j.quartile); });
+  const sel = document.getElementById('categoryFilter'); sel.innerHTML = '<option value="">Tất cả Quartile</option>';
+  Array.from(map).sort().forEach(q => { const o=document.createElement('option'); o.value=q; o.textContent=q; sel.appendChild(o); });
+}
+
+function renderJournals(){
+  const q = normalize(currentQuery);
+  let all = journalData.filter(i => (!currentCategory || i.quartile===currentCategory) && (!q || normalize(i.journal_name).includes(q)));
+  
+  if (currentSort.key) { 
+      const {key, asc} = currentSort;
+      all.sort((a,b)=>{
+        let va = a[key], vb = b[key];
+        if(key==='ranking_percent'||key==='total_citations') return asc ? va-vb : vb-va;
+        return asc ? String(va).localeCompare(String(vb)) : String(vb).localeCompare(String(va));
+      });
+  }
+  
+  const total = all.length; const totalPages = Math.max(1, Math.ceil(total/pageSize));
+  if(currentPage>totalPages) currentPage=totalPages; if(currentPage<1) currentPage=1;
+  const pageItems = all.slice((currentPage-1)*pageSize, currentPage*pageSize);
+  
+  journalBody.innerHTML = '';
+  if(total===0) journalBody.innerHTML = '<tr><td colspan="6" style="text-align:center;">Không có kết quả</td></tr>';
+  else pageItems.forEach(j => {
+      const r = journalBody.insertRow();
+      r.insertCell().textContent = j.journal_name; r.insertCell().textContent = j.publisher;
+      r.insertCell().textContent = j.quartile; r.insertCell().textContent = j.jif_rank;
+      r.insertCell().textContent = parseInt(j.total_citations||0).toLocaleString();
+      const rankCell = r.insertCell(); rankCell.textContent = parseFloat(j.ranking_percent).toFixed(4)+'%';
+      rankCell.style.color='#d32f2f'; rankCell.style.fontWeight='bold';
+      r.onclick = ()=>{
+        document.getElementById('journal_name').value = j.journal_name;
+        document.getElementById('publisher').value = j.publisher;
+        document.getElementById('ranking_percent').value = j.ranking_percent;
+        document.getElementById('cites_3_5y').value = j.total_citations;
+        document.getElementById('scoreForm').scrollIntoView({behavior:'smooth'});
+      };
+  });
+  renderPager(totalPages);
+}
+
+// --- HÀM PHÂN TRANG MỚI ---
+function renderPager(totalPages){
+  const p = document.getElementById('pager'); 
+  p.innerHTML = '';
+  
+  if(totalPages <= 1) return;
+
+  const createBtn = (label, isCurrent, isDisabled, onClick) => {
+      const btn = document.createElement('button');
+      btn.textContent = label;
+      if (isCurrent) btn.classList.add('active'); 
+      if (isDisabled) btn.disabled = true;
+      btn.onclick = onClick;
+      return btn;
+  };
+
+  // Nút Prev
+  p.appendChild(createBtn('«', false, currentPage === 1, () => {
+      currentPage--; renderJournals();
+  }));
+
+  // Logic số trang: 1 ... 4 5 6 ... 100
+  for (let i = 1; i <= totalPages; i++) {
+      if (i === 1 || i === totalPages || (i >= currentPage - 2 && i <= currentPage + 2)) {
+          p.appendChild(createBtn(i, i === currentPage, false, () => {
+              currentPage = i; renderJournals();
+          }));
+      } else if (i === currentPage - 3 || i === currentPage + 3) {
+          const span = document.createElement('span');
+          span.textContent = '...';
+          p.appendChild(span);
+      }
+  }
+
+  // Nút Next
+  p.appendChild(createBtn('»', false, currentPage === totalPages, () => {
+      currentPage++; renderJournals();
+  }));
+}
+
+document.getElementById('btnSearch').onclick = ()=>{ currentQuery=document.getElementById('searchInput').value; currentCategory=document.getElementById('categoryFilter').value; currentPage=1; renderJournals(); };
+document.getElementById('btnClear').onclick = ()=>{ document.getElementById('searchInput').value=''; document.getElementById('categoryFilter').value=''; currentQuery=''; currentCategory=''; currentPage=1; renderJournals(); };
+document.querySelectorAll('#journalTable th').forEach(th => th.onclick=()=>{
+    const k = th.dataset.key; if(!k)return;
+    if(currentSort.key===k) currentSort.asc=!currentSort.asc; else { currentSort.key=k; currentSort.asc=!(k==='ranking_percent'||k==='total_citations'); }
+    renderJournals();
+});
+document.addEventListener('DOMContentLoaded', loadAutoExcel);
+</script>
+</body>
+</html>
