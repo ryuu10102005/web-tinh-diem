@@ -17,7 +17,7 @@ async function connectDB() {
     }
     return pool;
 }
-async function getparameters() {
+async function getParameters() {
     const connection = await connectDB();
     const [rows] = await connection.execute('SELECT param_key, param_value FROM parameters');
     const params = {};
@@ -26,7 +26,7 @@ async function getparameters() {
     });
     return params;
 }
-async function savepaperScore(paperData) {
+async function savePaperScore(paperData) {
     const connection = await connectDB();
     const query = `
         INSERT INTO papers (
@@ -51,5 +51,5 @@ async function savepaperScore(paperData) {
     await connection.execute(query, values);
 }
 
-module.exports = { connectDB, getparameters, savepaperScore };
+module.exports = { connectDB, getParameters, savePaperScore };
 
