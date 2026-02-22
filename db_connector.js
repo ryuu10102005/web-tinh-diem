@@ -17,19 +17,19 @@ async function connectDB() {
     }
     return pool;
 }
-async function getParameters() {
+async function getparameters() {
     const connection = await connectDB();
-    const [rows] = await connection.execute('SELECT param_key, param_value FROM Parameters');
+    const [rows] = await connection.execute('SELECT param_key, param_value FROM parameters');
     const params = {};
     rows.forEach(row => {
         params[row.param_key] = parseFloat(row.param_value);
     });
     return params;
 }
-async function savePaperScore(paperData) {
+async function savepaperScore(paperData) {
     const connection = await connectDB();
     const query = `
-        INSERT INTO Papers (
+        INSERT INTO papers (
             publisher, journal_name, sjr_percentile_p, cites_3_5y, role_weight, 
             c95_tier_year, journal_base, journal_score, impact_score, 
             paper_score, paper_score_adj
@@ -51,5 +51,5 @@ async function savePaperScore(paperData) {
     await connection.execute(query, values);
 }
 
-module.exports = { connectDB, getParameters, savePaperScore };
+module.exports = { connectDB, getparameters, savepaperScore };
 
