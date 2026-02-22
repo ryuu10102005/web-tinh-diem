@@ -26,7 +26,7 @@ async function getParameters() {
 async function savePaperScore(paperData) {
   const query = `
     INSERT INTO papers (
-      publisher_id,
+      publisher,
       journal_name,
       sjr_percentile_p,
       cites_3_5y,
